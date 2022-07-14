@@ -4,26 +4,29 @@ package com.example.app.base.helper
 
 import android.app.Activity
 import android.content.Intent
+import android.content.IntentSender
 import android.os.Bundle
 import android.view.View
 import android.widget.FrameLayout
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.AnimRes
 import androidx.annotation.AnimatorRes
 import androidx.annotation.LayoutRes
 import androidx.annotation.UiThread
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityOptionsCompat
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentTransaction
 import com.example.app.base.helper.utils.isOnline
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlin.coroutines.CoroutineContext
+
 
 /**
  * @author Akshay Harsoda
@@ -51,29 +54,43 @@ abstract class BaseActivity : AppCompatActivity(), CoroutineScope, View.OnClickL
 
     var mJob: Job = Job()
 
+    var isOnPause: Boolean = false
+
+    private var mAlertDialog: AlertDialog? = null
+
     override val coroutineContext: CoroutineContext
         get() = mJob + Dispatchers.Main
 
     /**
      * your activity context object
      */
-    val mActivity: FragmentActivity
+    val mActivity: BaseActivity
         get() {
             return getActivityContext()
         }
 
     //<editor-fold desc="For Start Activity Result">
-    private var mRequestCode: Int = 0
+    private var mOnActivityResult: (resultCode: Int, data: Intent?) -> Unit = { _, _ -> }
 
-    private val launcher: ActivityResultLauncher<Intent> =
+    private val intentLauncher: ActivityResultLauncher<Intent> =
         registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) { result: ActivityResult ->
-            fromActivityResult(
-                requestCode = mRequestCode,
-                resultCode = result.resultCode,
-                data = result.data
-            )
+
+            val resultCode = result.resultCode
+            val data = result.data
+
+            mOnActivityResult.invoke(resultCode, data)
+        }
+
+    private val intentSenderLauncher: ActivityResultLauncher<IntentSenderRequest> =
+        registerForActivityResult(
+            ActivityResultContracts.StartIntentSenderForResult()
+        ) { result: ActivityResult ->
+            val resultCode = result.resultCode
+            val data = result.data
+
+            mOnActivityResult.invoke(resultCode, data)
         }
     //</editor-fold>
 
@@ -125,7 +142,7 @@ abstract class BaseActivity : AppCompatActivity(), CoroutineScope, View.OnClickL
      * in Kotlin :- {return this@MainActivity}
      */
     @UiThread
-    abstract fun getActivityContext(): FragmentActivity
+    abstract fun getActivityContext(): BaseActivity
 
     /**
      * This method for set your layout
@@ -151,6 +168,10 @@ abstract class BaseActivity : AppCompatActivity(), CoroutineScope, View.OnClickL
     /**
      * This method For Init All Ads.
      */
+    @UiThread
+    open fun setDefaultAdUI() {
+    }
+
     @UiThread
     open fun initAds() {
     }
@@ -205,6 +226,7 @@ abstract class BaseActivity : AppCompatActivity(), CoroutineScope, View.OnClickL
      * This method for load your all type of ads
      */
     private fun loadAds() {
+        setDefaultAdUI()
         if (isOnline) {
             initAds()
         }
@@ -237,19 +259,55 @@ abstract class BaseActivity : AppCompatActivity(), CoroutineScope, View.OnClickL
      * This Method will replace your default method of [startActivityForResult]
      *
      * @param fIntent Your Launcher Screen Intent
-     * @param fRequestCode Your Request Code For Get Result Of Your Next Activity
+     * @param isCheckResolveActivity pass false if you don't check resolveActivity of this Intent
      * @param fEnterAnimId your activity Enter animation
      * @param fExitAnimId your activity Exit animation
+     * @param onActivityResult in this method you get your Result
      */
     open fun launchActivityForResult(
         fIntent: Intent,
-        fRequestCode: Int,
+        isCheckResolveActivity: Boolean = true,
         @AnimatorRes @AnimRes fEnterAnimId: Int = android.R.anim.fade_in,
-        @AnimatorRes @AnimRes fExitAnimId: Int = android.R.anim.fade_out
+        @AnimatorRes @AnimRes fExitAnimId: Int = android.R.anim.fade_out,
+        onActivityResult: (resultCode: Int, data: Intent?) -> Unit
     ) {
-        mRequestCode = fRequestCode
-        launcher.launch(
-            fIntent,
+        mOnActivityResult = onActivityResult
+
+        if (isCheckResolveActivity) {
+            if (fIntent.resolveActivity(packageManager) != null) {
+                intentLauncher.launch(
+                    fIntent,
+                    ActivityOptionsCompat.makeCustomAnimation(mActivity, fEnterAnimId, fExitAnimId)
+                )
+            }
+        } else {
+            intentLauncher.launch(
+                fIntent,
+                ActivityOptionsCompat.makeCustomAnimation(mActivity, fEnterAnimId, fExitAnimId)
+            )
+        }
+    }
+
+    /**
+     * This Method will replace your default method of [startIntentSenderForResult]
+     *
+     * @param fIntentSender Your Launcher Screen IntentSender
+     * @param fEnterAnimId your activity Enter animation
+     * @param fExitAnimId your activity Exit animation
+     * @param onActivityResult in this method you get your Result
+     */
+    open fun launchActivityForResult(
+        fIntentSender: IntentSender,
+        @AnimatorRes @AnimRes fEnterAnimId: Int = android.R.anim.fade_in,
+        @AnimatorRes @AnimRes fExitAnimId: Int = android.R.anim.fade_out,
+        onActivityResult: (resultCode: Int, data: Intent?) -> Unit
+    ) {
+        mOnActivityResult = onActivityResult
+
+        val intentSenderRequest: IntentSenderRequest = IntentSenderRequest.Builder(fIntentSender).build()
+
+        intentSenderLauncher.launch(
+            intentSenderRequest,
             ActivityOptionsCompat.makeCustomAnimation(mActivity, fEnterAnimId, fExitAnimId)
         )
     }
@@ -274,17 +332,6 @@ abstract class BaseActivity : AppCompatActivity(), CoroutineScope, View.OnClickL
         if (isNeedToFinish) {
             mActivity.finish()
         }
-    }
-
-    /**
-     * This Method will replace your default method of [onActivityResult]
-     *
-     * @param requestCode The integer request code originally supplied to launchActivityForResult(), allowing you to identify who this result came from.
-     * @param resultCode The integer result code returned by the child activity through its setResult().
-     * @param data An Intent, which can return result data to the caller (various data can be attached to Intent "extras").
-     */
-    @UiThread
-    open fun fromActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
     }
     //</editor-fold>
 
@@ -313,6 +360,7 @@ abstract class BaseActivity : AppCompatActivity(), CoroutineScope, View.OnClickL
     }
     //</editor-fold>
 
+    //<editor-fold desc="Default Override Function">
     override fun onClick(v: View) {
 
     }
@@ -326,4 +374,5 @@ abstract class BaseActivity : AppCompatActivity(), CoroutineScope, View.OnClickL
         super.onDestroy()
         mJob.cancel()
     }
+    //</editor-fold>
 }
