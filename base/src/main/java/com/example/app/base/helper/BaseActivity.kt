@@ -121,7 +121,7 @@ abstract class BaseActivity : AppCompatActivity(), CoroutineScope, View.OnClickL
      * If You Using viewBinding
      * @param view pass Your Layout File Lick 'ActivityMainBinding.inflate(getLayoutInflater()).getRoot()'
      */
-    override fun setContentView(view: View) {
+    override fun setContentView(view: View?) {
         super.setContentView(view)
         setContentView()
     }

@@ -1,4 +1,4 @@
-package com.example.app.base.helper
+package com.example.app.test.helper
 
 import org.junit.Test
 
