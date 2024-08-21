@@ -5,6 +5,7 @@ plugins {
 }
 
 android {
+    namespace "com.example.base.helper.demo"
     compileSdk 31
 
     defaultConfig {
@@ -13,7 +14,7 @@ android {
         targetSdk 31
         versionCode 1
         versionName "$dependencies_version"
-
+        multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
