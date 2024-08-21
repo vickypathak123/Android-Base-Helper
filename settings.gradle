@@ -24,3 +24,4 @@ dependencyResolutionManagement {
 rootProject.name = "BaseHelper"
 include ':app'
 include ':base'
+include ':testing'

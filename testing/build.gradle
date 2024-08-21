@@ -61,7 +61,7 @@ afterEvaluate {
 //                version = "$dependencies_version"
 
                 groupId = 'com.github.vickypathak123.Android-Base-Helper'
-                artifactId = 'base'
+                artifactId = 'testing'
                 version = "$dependencies_version"
             }
         }
