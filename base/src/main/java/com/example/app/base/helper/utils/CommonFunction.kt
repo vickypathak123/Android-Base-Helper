@@ -81,16 +81,16 @@ fun Activity.showStatusBar() {
 //</editor-fold>
 
 //<editor-fold desc="Pass Or Get Enum Through Intent">
-inline fun <reified T : Enum<T>> Intent.putEnumExtra(victim: T): Intent =
-    putExtra(T::class.java.name, victim.ordinal)
-
-inline fun <reified T : Enum<T>> Bundle.putEnumExtra(victim: T) = this.putInt(T::class.java.name, victim.ordinal)
-
-inline fun <reified T : Enum<T>> Intent.getEnumExtra(): T =
-    getIntExtra(T::class.java.name, -1).takeUnless { it == -1 }
-        ?.let { T::class.java.enumConstants[it] } ?: T::class.java.enumConstants[0]
-
-inline fun <reified T : Enum<T>> Bundle.getEnumExtra(): T =
-    this.getInt(T::class.java.name, -1).takeUnless { it == -1 }
-        ?.let { T::class.java.enumConstants[it] } ?: T::class.java.enumConstants[0]
+//inline fun <reified T : Enum<T>> Intent.putEnumExtra(victim: T): Intent =
+//    putExtra(T::class.java.name, victim.ordinal)
+//
+//inline fun <reified T : Enum<T>> Bundle.putEnumExtra(victim: T) = this.putInt(T::class.java.name, victim.ordinal)
+//
+//inline fun <reified T : Enum<T>> Intent.getEnumExtra(): T =
+//    getIntExtra(T::class.java.name, -1).takeUnless { it == -1 }
+//        ?.let { T::class.java.enumConstants[it] } ?: T::class.java.enumConstants[0]
+//
+//inline fun <reified T : Enum<T>> Bundle.getEnumExtra(): T =
+//    this.getInt(T::class.java.name, -1).takeUnless { it == -1 }
+//        ?.let { T::class.java.enumConstants[it] } ?: T::class.java.enumConstants[0]
 //</editor-fold>

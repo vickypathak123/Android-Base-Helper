@@ -58,13 +58,13 @@ afterEvaluate {
             release(MavenPublication) {
                 from components.release
 
-//                groupId = 'com.github.vickypathak123'
-//                artifactId = 'Android-Base-Helper'
-//                version = "$dependencies_version"
-
-                groupId = 'com.github.vickypathak123.Android-Base-Helper'
-                artifactId = 'base'
+                groupId = 'com.github.vickypathak123'
+                artifactId = 'Android-Base-Helper'
                 version = "$dependencies_version"
+
+//                groupId = 'com.github.vickypathak123.Android-Base-Helper'
+//                artifactId = 'base'
+//                version = "$dependencies_version"
             }
         }
     }
